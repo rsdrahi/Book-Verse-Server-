@@ -2,6 +2,7 @@ import express, { Request, Response } from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 import { ObjectId } from "mongodb";
+import { title } from "node:process";
 const { MongoClient, ServerApiVersion } = require('mongodb');
 
 dotenv.config();
@@ -30,13 +31,23 @@ async function run() {
   const db = client.db(process.env.DB_NAME);
 
   const booksCollection = db.collection("books");
-  const borrowCollection = db.collection("borrow")
 
   try {
     await client.connect();
 
     app.get("/books", async (req: Request, res: Response) => {
-      const result = await booksCollection.find().toArray();
+      const search = req.query.search as string;
+      let query = {};
+
+      if (search) {
+        query = {
+          title: {
+            $regex: search,
+            $options: 'i',
+          }
+        }
+      }
+      const result = await booksCollection.find(query).toArray();
       res.send(result);
     })
 
@@ -80,13 +91,6 @@ async function run() {
       res.send(result);
     })
 
-    // borrow
-
-    app.post("/borrow", async (req: Request, res: Response) => {
-      const borrowData = req.body;
-      const result = await borrowCollection.insertOne(borrowData);
-      res.send(result);
-    })
 
     await client.db("admin").command({ ping: 1 });
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
