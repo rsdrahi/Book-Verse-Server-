@@ -59,8 +59,13 @@ async function run() {
 
     app.post("/books", async (req: Request, res: Response) => {
       const book = req.body;
+      book.totalCopies = Number(book.totalCopies);
+      book.availableCopies = Number(book.availableCopies);
       const result = await booksCollection.insertOne(book);
-      res.send(result);
+      res.send({
+        success: true,
+        insertedId: result.insertedId,
+      });
     })
 
     // single book
