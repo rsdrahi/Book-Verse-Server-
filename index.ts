@@ -3,6 +3,7 @@ import cors from "cors";
 import dotenv from "dotenv";
 import { ObjectId } from "mongodb";
 import { title } from "node:process";
+import { skip } from "node:test";
 const { MongoClient, ServerApiVersion } = require('mongodb');
 
 dotenv.config();
@@ -31,12 +32,16 @@ async function run() {
   const db = client.db(process.env.DB_NAME);
 
   const booksCollection = db.collection("books");
+  const borrowCollection = db.collection("borrow")
 
   try {
     await client.connect();
 
     app.get("/books", async (req: Request, res: Response) => {
       const search = req.query.search as string;
+      const page = Number(req.query.page) || 1;
+      const limit = 8;
+      const skip = (page - 1) * limit;
       let query = {};
 
       if (search) {
@@ -47,8 +52,9 @@ async function run() {
           }
         }
       }
-      const result = await booksCollection.find(query).toArray();
-      res.send(result);
+      const total = await booksCollection.countDocuments(query)
+      const result = await booksCollection.find(query).skip(skip).limit(limit).toArray();
+      res.send({books: result, total});
     })
 
     app.post("/books", async (req: Request, res: Response) => {
@@ -89,6 +95,36 @@ async function run() {
         _id: new ObjectId(id),
       });
       res.send(result);
+    })
+
+    // borrow book
+
+    app.post("/borrow", async (req: Request, res: Response) => {
+      const borrowData = req.body;
+      const { bookId } = borrowData;
+      const book = await booksCollection.findOne({
+        _id: new ObjectId(bookId),
+      });
+
+      if (book.availableCopies <= 0) {
+        return res.send({
+          message: "No Copies Available"
+        });
+      }
+      await borrowCollection.insertOne(borrowData);
+      await booksCollection.updateOne(
+        {
+          _id: new ObjectId(bookId),
+        },
+        {
+          $set: {
+            availableCopies: book.availableCopies - 1,
+          },
+        }
+      )
+      res.send({
+        message: "Borrow Success",
+      })
     })
 
 
