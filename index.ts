@@ -29,12 +29,13 @@ async function run() {
 
   const db = client.db(process.env.DB_NAME);
 
-  const booksCollection = db.collection("books");
-  const borrowCollection = db.collection("borrow")
-
+  
   try {
     await client.connect();
-
+    
+    const booksCollection = db.collection("books");
+    const borrowCollection = db.collection("borrow");
+    
     app.get("/books", async (req: Request, res: Response) => {
       const search = req.query.search as string;
       const page = Number(req.query.page) || 1;
