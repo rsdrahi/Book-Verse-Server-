@@ -2,8 +2,6 @@ import express, { Request, Response } from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 import { ObjectId } from "mongodb";
-import { title } from "node:process";
-import { skip } from "node:test";
 const { MongoClient, ServerApiVersion } = require('mongodb');
 
 dotenv.config();
@@ -104,6 +102,11 @@ async function run() {
 
     // borrow book
 
+    app.get("/borrow", async (req: Request, res: Response) => {
+      const result = await borrowCollection.find().toArray();
+      res.send(result);
+    })
+
     app.post("/borrow", async (req: Request, res: Response) => {
       const borrowData = req.body;
       const { bookId } = borrowData;
@@ -131,6 +134,13 @@ async function run() {
         message: "Borrow Success",
       })
     })
+
+    // manage-book
+
+    // app.get("/manage-books", async (req: Request, res: Response) => {
+    //   const result = await booksCollection.find().toArray();
+    //   res.send(result);
+    // })
 
 
     await client.db("admin").command({ ping: 1 });
