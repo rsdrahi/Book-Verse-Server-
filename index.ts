@@ -25,17 +25,18 @@ app.get("/", (req: Request, res: Response) => {
   res.send("Hello World!");
 });
 
-async function run() {
+// async function run() {
+//   try {
+//     await client.connect();
 
-  const db = client.db(process.env.DB_NAME);
-
-  
-  try {
-    await client.connect();
+client.connect(() => {
+  console.log('connect to mongodb');
+}).catch(console.dir)
     
+    const db = client.db(process.env.DB_NAME);
     const booksCollection = db.collection("books");
     const borrowCollection = db.collection("borrow");
-    
+
     app.get("/books", async (req: Request, res: Response) => {
       const search = req.query.search as string;
       const page = Number(req.query.page) || 1;
@@ -144,14 +145,16 @@ async function run() {
     // })
 
 
-    await client.db("admin").command({ ping: 1 });
-    console.log("Pinged your deployment. You successfully connected to MongoDB!");
-  } finally {
-    // await client.close();
-  }
-}
-run().catch(console.dir);
+    // await client.db("admin").command({ ping: 1 });
+//     console.log("Pinged your deployment. You successfully connected to MongoDB!");
+//   } finally {
+//     // await client.close();
+//   }
+// }
+// run().catch(console.dir);
 
 app.listen(port, () => {
   console.log(`Example app listening on port ${port}`);
 });
+
+module.exports = app;
